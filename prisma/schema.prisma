@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email      String    @unique
+  password  String
+  avatarUrl String?    
+  createdAt DateTime  @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+
+model Application {
+  id          Int      @id @default(autoincrement())
+  authorId    Int
+  companyName String
+  position    String
+  jobUrl      String?
+  status      ApplicationStatus   @default(WISHLIST)
+  minSalary   Int?
+  maxSalary   Int?
+  location    String?
+  notes       String?
+  appliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User     @relation(fields:[authorId], references:[id], onDelete:Cascade)
+  stages      InterviewStage[]
+
+  @@index([authorId])
+  @@index([authorId,status])
+
+}
+
+model InterviewStage{
+    id                Int           @id   @default(autoincrement())
+    applicationId     Int
+    type              StageType
+    scheduledAt       DateTime?
+    completedAt       DateTime?
+    notes             String?
+    result            StageResult      @default(PENDING)
+    createdAt         DateTime         @default(now())
+    application       Application       @relation(fields:[applicationId],references:[id],onDelete:Cascade)
+    @@index([applicationId])
+
+}
+
+enum ApplicationStatus {
+  WISHLIST
+  APPLIED
+  INTERVIEWING
+  OFFERED
+  REJECTED
+  ACCEPTED 
+}
+
+
+
+enum StageType {
+  PHONE_SCREEN
+  TECHNICAL
+  HR
+  ASSIGNMENT
+  FINAL
+  OFFER
+}
+
+
+
+enum StageResult{
+  PENDING
+  PASSED
+  FAILED
+  CANCELLED
+}
+
+
