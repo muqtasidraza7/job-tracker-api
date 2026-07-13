@@ -12,3 +12,10 @@ export const loginSchema = z.object({
     email: z.string().email(),
     password: z.string()
 })
+
+export const updateMeSchema = z.object({
+    name: z.string().min(3).optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(8).optional(),
+    avatarUrl: z.string().url().optional()
+}).strict()
