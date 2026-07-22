@@ -6,10 +6,12 @@ import {
     getAppById,
     updateApp,
     updateAppStatus,
-    deleteApp
+    deleteApp,
+    generateCoverLetterHandler
 } from "../controllers/application.controller.js"
 import { protect } from "../middlewares/protect.middleware.js"
 import { validate } from "../middlewares/validate.middleware.js"
+import { aiLimiter } from "../middlewares/rateLimit.middleware.js"
 import {
     createApplicationSchema,
     updateApplicationSchema,
@@ -26,5 +28,6 @@ applicationRouter.get("/:id", getAppById)
 applicationRouter.patch("/:id", validate(updateApplicationSchema), updateApp)
 applicationRouter.patch("/:id/status", validate(updateStatusSchema), updateAppStatus)
 applicationRouter.delete("/:id", deleteApp)
+applicationRouter.post("/:id/cover-letter", aiLimiter, generateCoverLetterHandler)
 
 export default applicationRouter

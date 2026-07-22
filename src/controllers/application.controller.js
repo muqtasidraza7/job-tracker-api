@@ -6,6 +6,7 @@ import {
     deleteApplication,
     getApplicationStats
 } from "../services/application.service.js"
+import { generateCoverLetter } from "../services/ai.service.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 
@@ -66,4 +67,19 @@ export const deleteApp = asyncHandler(async (req, res) => {
         return errorResponse(res, result.status, result.message)
     }
     return res.status(204).send()
+})
+
+
+export const generateCoverLetterHandler = asyncHandler(async (req, res) => {
+    const applicationId = req.params.id
+    const userId = req.user.id
+
+    const result = await getApplicationById(applicationId, userId)
+    if (result.status) {
+        return errorResponse(res, result.status, result.message)
+    }
+
+    const coverLetter = await generateCoverLetter(result.data)
+
+    return successResponse(res, 200, { coverLetter })
 })
