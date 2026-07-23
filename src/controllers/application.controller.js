@@ -22,9 +22,9 @@ export const createApp = asyncHandler(async (req, res) => {
 
 
 export const getApps = asyncHandler(async (req, res) => {
-    const { status, search } = req.query
-    const applications = await getUserApplications(req.user.id, { status, search })
-    return successResponse(res, 200, applications)
+    const { status, search, page, limit } = req.query
+    const result = await getUserApplications(req.user.id, { status, search }, { page, limit })
+    return successResponse(res, 200, result.data, result.meta)
 })
 
 

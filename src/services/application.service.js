@@ -5,8 +5,12 @@ export const createApplication = async (data) => {
 }
 
 
-export const getUserApplications = async (userId, filter = {}) => {
+export const getUserApplications = async (userId, filter = {}, pagination = {}) => {
     const { status, search } = filter
+    const page = Math.max(1, Number(pagination.page)) || 1
+    const limit = Math.min(100, Number(pagination.limit)) || 10
+    const skip = (page - 1) * limit
+
     const where = {
         authorId: Number(userId)
     }
@@ -20,8 +24,19 @@ export const getUserApplications = async (userId, filter = {}) => {
             { position: { contains: search, mode: 'insensitive' } }
         ]
     }
-
-    return await prisma.application.findMany({ where })
+    const [applications, totalCount] = await Promise.all([
+        prisma.application.findMany({ where, skip, take: limit, }),
+        prisma.application.count({ where })
+    ])
+    return {
+        data: applications,
+        meta: {
+            total: totalCount,
+            page,
+            limit,
+            totalPages: Math.ceil(totalCount / limit)
+        }
+    }
 }
 
 export const getApplicationById = async (applicationId, userId) => {
@@ -48,14 +63,16 @@ export const updateApplication = async (applicationId, userId, updateData) => {
         return { status: 404, message: "Application not found" }
     }
 
-    if (application.authorId != Number(userId)) {
+    if (application.authorId !== Number(userId)) {
         return { status: 403, message: "User not Authorized" }
     }
 
-    return await prisma.application.update({
+    const updatedApp = await prisma.application.update({
         where: { id: Number(applicationId) },
         data: updateData
     })
+    return { data: updatedApp }
+
 }
 
 export const deleteApplication = async (applicationId, userId) => {

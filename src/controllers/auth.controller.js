@@ -7,7 +7,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     const { name, email, password, avatarUrl } = req.body
     const existingUser = await findUserByEmail(email)
     if (existingUser) {
-        return errorResponse(res, 400, "Email is already registered")
+        return errorResponse(res, 409, "Email is already registered")
     }
     const hashedPassword = await bcrypt.hash(password, 10)
     const user = await createUser({ name, email, password: hashedPassword, avatarUrl })
@@ -63,7 +63,7 @@ export const updateMe = asyncHandler(async (req, res, next) => {
     if (email) {
         const userWithEmail = await findUserByEmail(email)
         if (userWithEmail && userWithEmail.id !== req.user.id) {
-            return errorResponse(res, 400, "Email is already registered")
+            return errorResponse(res, 409, "Email is already registered")
         }
     }
 

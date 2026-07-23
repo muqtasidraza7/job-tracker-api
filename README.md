@@ -1,134 +1,104 @@
-# Job Application Tracker REST API
+# Job Application Tracker API
 
-A robust, enterprise-grade backend API built with **Node.js, Express, and PostgreSQL** to help job seekers track their job applications, organize interview stages, and generate AI-tailored cover letters using the **OpenAI API**.
+A RESTful backend API for tracking job applications, interview stages, and generating AI-powered cover letters.
 
----
-
-## 🚀 Tech Stack
-* **Runtime:** Node.js (ES Modules)
-* **Framework:** Express
-* **Database:** PostgreSQL
-* **ORM:** Prisma ORM
-* **Authentication:** JSON Web Tokens (JWT) & bcrypt (password hashing)
-* **Validation:** Zod
-* **Rate Limiting:** express-rate-limit (Stricter limiting on AI & Auth routes)
-* **AI Integration:** OpenAI API (GPT-4o-mini)
-* **Testing:** Jest & Supertest
+**Live URL:** [https://job-tracker-api-puce.vercel.app](https://job-tracker-api-puce.vercel.app)  
+**GitHub:** [https://github.com/muqtasidraza7/job-tracker-api](https://github.com/muqtasidraza7/job-tracker-api)
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
+- **Runtime:** Node.js with Express.js (ES Modules)
+- **Database:** PostgreSQL via Prisma ORM
+- **Authentication:** JWT with bcrypt password hashing
+- **Validation:** Zod schema validation
+- **AI Integration:** OpenAI GPT-4o-mini for cover letter generation
+- **Security:** Helmet, CORS, express-rate-limit
+- **Deployment:** Vercel (API) + Railway (PostgreSQL)
+
+---
+
+## Features
+- **JWT Authentication:** Secure user registration, login, profile retrieval, and settings updates.
+- **CRUD Operations:** Full Create, Read, Update, and Delete endpoints for job applications with rigorous ownership checks.
+- **Status Lifecycle Tracking:** Track application states seamlessly: `WISHLIST` → `APPLIED` → `INTERVIEWING` → `OFFERED` → `ACCEPTED`/`REJECTED`.
+- **Interview Stage Management:** Add, list, edit, and delete multiple interview rounds (Phone Screen, Technical, HR, etc.) with automatic overall status transitions (first interview scheduled on an `APPLIED` job automatically moves it to `INTERVIEWING`).
+- **Dashboard Stats:** Aggregate analytics returning total applications count, applications added in the current week, and breakdown of applications by status.
+- **AI Cover Letter Generator:** Integrates with OpenAI to create customized cover letters tailored to the specific position, company details, and notes.
+- **Filtering & Search:** Search jobs by company name or position, and filter by current application status.
+- **Pagination:** Consistent offset-based pagination returning page data and metadata (`total`, `page`, `limit`, `totalPages`) for application lists.
+- **Rate Limiting Protection:** Implements multi-tier limiting to secure resources:
+  * Global API Limiter: 100 requests per 15 minutes per IP
+  * Auth Limiter: 10 login attempts per 15 minutes per IP
+  * AI Limiter: 5 cover letter requests per hour per IP
+
+---
+
+## API Endpoints
+
+### Authentication
+| Method | Route              | Auth     | Description                    |
+|--------|--------------------|----------|--------------------------------|
+| POST   | `/api/auth/register` | Public   | Register new user, returns JWT |
+| POST   | `/api/auth/login`    | Public   | Login, returns JWT             |
+| GET    | `/api/auth/me`       | Required | Get logged-in user profile     |
+| PATCH  | `/api/auth/me`       | Required | Update own profile             |
+
+### Applications
+| Method | Route                            | Auth     | Description                      |
+|--------|----------------------------------|----------|----------------------------------|
+| GET    | `/api/applications`                | Required | List own applications, paginated |
+| POST   | `/api/applications`                | Required | Create new application           |
+| GET    | `/api/applications/stats`          | Required | Dashboard stats                  |
+| GET    | `/api/applications/:id`            | Required | Get single application           |
+| PATCH  | `/api/applications/:id`            | Required | Update application               |
+| PATCH  | `/api/applications/:id/status`     | Required | Update status only               |
+| DELETE | `/api/applications/:id`            | Required | Delete application               |
+| POST   | `/api/applications/:id/cover-letter` | Required | Generate AI cover letter         |
+
+### Interview Stages
+| Method | Route                                        | Auth     | Description          |
+|--------|----------------------------------------------|----------|----------------------|
+| GET    | `/api/applications/:id/stages`                 | Required | List stages          |
+| POST   | `/api/applications/:id/stages`                 | Required | Add stage            |
+| PATCH  | `/api/applications/:id/stages/:stageId`        | Required | Update stage         |
+| DELETE | `/api/applications/:id/stages/:stageId`        | Required | Delete stage         |
+
+---
+
+## Local Setup
+
+### 1. Clone the repository and install dependencies
+```bash
+git clone https://github.com/muqtasidraza7/job-tracker-api
+cd job-tracker-api
+npm install
 ```
-job-tracker-api/
-├── prisma/
-│   └── schema.prisma    # Database Schema Models & Enums
-├── src/
-│   ├── config/          # Configurations (db.js, openai.js)
-│   ├── controllers/     # HTTP Controller Layer (Express Handlers)
-│   ├── services/        # Business Logic & Data Access Layer (Prisma queries)
-│   ├── middlewares/     # Middlewares (protect, validate, rateLimit, errorHandler)
-│   ├── routes/          # Express Routers
-│   ├── schemas/         # Zod Request Validation Schemas
-│   ├── utils/           # Utilities (response.js, asynchandler.js)
-│   └── app.js           # Express App Configuration
-├── index.js             # App Entry Point (Server listener)
-├── babel.config.json    # Babel config for Jest ESM support
-├── package.json
-└── README.md
-```
 
----
-
-## 📊 Database Schema (Prisma)
-The database has 3 relational models:
-
-### 1. `User`
-Tracks authenticated job-seekers:
-* `id` (Int, PK, autoincrement)
-* `name` (String)
-* `email` (String, Unique)
-* `password` (String, hashed)
-* `avatarUrl` (String, Nullable)
-* `createdAt` / `updatedAt`
-
-### 2. `Application`
-Tracks job applications (isolated per user):
-* `id` (Int, PK, autoincrement)
-* `authorId` (Int, FK -> User)
-* `companyName` (String)
-* `position` (String)
-* `jobUrl` (String, Nullable)
-* `status` (Enum: `WISHLIST`, `APPLIED`, `INTERVIEWING`, `OFFERED`, `REJECTED`, `ACCEPTED`)
-* `minSalary` / `maxSalary` (Int, Nullable)
-* `location` (String, Nullable)
-* `notes` (String, Nullable)
-* `appliedAt` (DateTime, Nullable)
-
-### 3. `InterviewStage`
-Tracks stages for individual applications:
-* `id` (Int, PK, autoincrement)
-* `applicationId` (Int, FK -> Application)
-* `type` (Enum: `PHONE_SCREEN`, `TECHNICAL`, `HR`, `ASSIGNMENT`, `FINAL`, `OFFER`)
-* `result` (Enum: `PENDING`, `PASSED`, `FAILED`, `CANCELLED`)
-* `scheduledAt` / `completedAt` (DateTime, Nullable)
-* `notes` (String, Nullable)
-
----
-
-## 📡 API Endpoints
-
-### 🔐 Authentication (`/api/auth`)
-* `POST /register` - Registers a new user & returns user details + JWT.
-* `POST /login` - Authenticates user & returns JWT (Rate-limited to 10 requests/15 mins).
-* `GET /me` - Fetches the currently logged-in user profile (Requires Token).
-* `PATCH /me` - Updates the current user's profile (Requires Token).
-
-### 💼 Applications (`/api/applications`)
-*All endpoints below require a valid `Bearer` token.*
-* `POST /` - Creates a new application (Validates salary: `maxSalary >= minSalary`).
-* `GET /` - Lists user applications (Supports query filtering: `?status=APPLIED` & `?search=google`).
-* `GET /stats` - Returns stats summary (`total`, `thisWeek`, and `byStatus` counts).
-* `GET /:id` - Fetches details of a single application (Checks ownership).
-* `PATCH /:id` - Updates application details (Checks ownership).
-* `PATCH /:id/status` - Updates status only (Checks ownership).
-* `DELETE /:id` - Deletes application (Checks ownership - Returns `204 No Content`).
-* `POST /:id/cover-letter` - Generates a tailored AI cover letter (Strictly limited to 5 requests/hour per IP).
-
----
-
-## ⚙️ Configuration & Setup
-
-### 1. Environment Variables (`.env`)
-Create a `.env` file in the root directory:
+### 2. Configure Environment Variables
+Create a `.env` file in the root of the project:
 ```env
 PORT=3000
-DATABASE_URL=postgresql://<user>:<password>@localhost:5432/job_tracker?schema=public
-JWT_KEY=your_secret_jwt_sign_key
-OPENAI_API_KEY=your_openai_api_key
+DATABASE_URL=postgresql://user:password@localhost:5432/job_tracker?schema=public
+JWT_KEY=your_secret_key
+OPENAI_API_KEY=your_openai_key
 ```
 
-### 2. Local Setup
+### 3. Initialize the Database & Run
 ```bash
-# Install dependencies
-npm install
+# Run Prisma migrations
+npx prisma migrate dev
 
-# Run database migrations
-npx prisma migrate dev --name init
-
-# Generate Prisma Client
+# Run Prisma client generator
 npx prisma generate
 
-# Run in development mode (with nodemon)
+# Start the development server
 npm run dev
-
-# Run unit tests (uses Jest & Babel)
-npm run test
 ```
 
 ---
 
-## 🛡️ Core Architectural Rules Followed
-* **Strict Separation of Concerns:** Controllers handle HTTP codes/responses; Services handle data retrieval/Prisma logic. Controllers never import Prisma directly.
-* **Implicit Data Isolation:** All list queries filter by `authorId: req.user.id`.
-* **Explicit Authorization:** Single-record handlers check if `record.authorId === req.user.id` at the service layer, returning specific error codes like `NOT_FOUND` and `FORBIDDEN`.
-* **Safe Input Processing:** Request body parsing middleware (`validate`) parses and strips out unexpected body variables using Zod schemas.
+## 📬 Postman Collection
+To make testing easier for interviewers, a complete Postman collection is exported in the root directory: **`postman_collection.json`**. 
+
+You can import this file directly into Postman to instantly load all endpoints, preset payloads, and headers.
