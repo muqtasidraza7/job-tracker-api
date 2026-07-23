@@ -19,7 +19,7 @@ app.use("/api", apiLimiter)
 
 app.use("/api/auth", authRouter)
 app.use("/api/applications", applicationRouter)
-applicationRouter.use("/:id/stages", stageRouter)
+app.use("/api/applications/:id/stages", stageRouter)
 
 
 
