@@ -1,6 +1,8 @@
 import { prisma } from "../config/db.js"
+import { InterviewStage } from "@prisma/client"
+import { CreateStageInput, ServiceResult } from "../types/service.types.js"
 
-export const getStagesByApplicationId = async (applicationId, userId) => {
+export const getStagesByApplicationId = async (applicationId: number, userId: number): Promise<ServiceResult<InterviewStage[]>> => {
     const app = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
@@ -15,7 +17,7 @@ export const getStagesByApplicationId = async (applicationId, userId) => {
     return { data: stages }
 }
 
-export const createStage = async (applicationId, userId, stageData) => {
+export const createStage = async (applicationId: number, userId: number, stageData: CreateStageInput): Promise<ServiceResult<InterviewStage>> => {
     const app = await prisma.application.findUnique({
         where: { id: Number(applicationId) },
         include: { stages: true }
@@ -52,7 +54,7 @@ export const createStage = async (applicationId, userId, stageData) => {
     })
 }
 
-export const updateStage = async (stageId, userId, updateData) => {
+export const updateStage = async (stageId: number, userId: number, updateData: Partial<CreateStageInput>): Promise<ServiceResult<InterviewStage>> => {
 
     const stage = await prisma.interviewStage.findUnique({
         where: { id: Number(stageId) },
@@ -73,7 +75,7 @@ export const updateStage = async (stageId, userId, updateData) => {
     return { data: updatedStage }
 }
 
-export const deleteStage = async (stageId, userId) => {
+export const deleteStage = async (stageId: number, userId: number): Promise<ServiceResult<boolean>> => {
     const stage = await prisma.interviewStage.findUnique({
         where: { id: Number(stageId) },
         include: { application: true }

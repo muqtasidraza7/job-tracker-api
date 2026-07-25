@@ -1,8 +1,8 @@
+import { NextFunction, Request, Response } from "express"
 import { errorResponse, successResponse } from "../utils/response.js"
-import { asyncHandler } from "../utils/asyncHandler.js"
 import jwt from "jsonwebtoken"
 
-export const protect = asyncHandler(async (req, res, next) => {
+export const protect = (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization
     if (!header || !header.startsWith("Bearer ")) {
         return errorResponse(res, 401, "No or Invalid Token ")
@@ -10,11 +10,16 @@ export const protect = asyncHandler(async (req, res, next) => {
 
     const token = header.split(" ")[1]
     try {
-        const decoded = jwt.verify(token, process.env.JWT_KEY)
+        const decoded = jwt.verify(token, process.env.JWT_KEY as string) as {
+            id: number
+            email: string
+            name: string
+            avatarUrl?: string | null
+        }
         req.user = decoded
         next()
     } catch (error) {
         return errorResponse(res, 401, "Invalid or expired token")
     }
 
-})
+}

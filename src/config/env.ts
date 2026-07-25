@@ -1,0 +1,17 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
+const requiredEnvVars = ['JWT_KEY', 'DATABASE_URL', 'OPENAI_API_KEY'] as const
+
+for (const key of requiredEnvVars) {
+    if (!process.env[key]) {
+        throw new Error(`Missing required environment variable: ${key}`)
+    }
+}
+
+export const env = {
+    PORT: process.env.PORT || '3000',
+    JWT_KEY: process.env.JWT_KEY!,
+    DATABASE_URL: process.env.DATABASE_URL!,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+}

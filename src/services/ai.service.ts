@@ -1,6 +1,8 @@
 import { openai } from "../config/openai.js"
+import { Application } from "@prisma/client"
 
-export const generateCoverLetter = async (application) => {
+
+export const generateCoverLetter = async (application: Application): Promise<string | null> => {
     const { companyName, position, location, notes } = application
 
     const userPrompt = `

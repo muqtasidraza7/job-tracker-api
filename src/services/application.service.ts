@@ -1,33 +1,50 @@
 import { prisma } from "../config/db.js"
+import { Application } from "@prisma/client"
+import {
+    CreateApplicationInput,
+    GetApplicationsFilter,
+    ServiceResult
+} from "../types/service.types.js"
 
-export const createApplication = async (data) => {
+export const createApplication = async (data: CreateApplicationInput): Promise<Application> => {
     return await prisma.application.create({ data })
 }
 
-
-export const getUserApplications = async (userId, filter = {}, pagination = {}) => {
-    const { status, search } = filter
-    const page = Math.max(1, Number(pagination.page)) || 1
-    const limit = Math.min(100, Number(pagination.limit)) || 10
+export const getUserApplications = async (
+    userId: number,
+    filter: GetApplicationsFilter = {}
+): Promise<{
+    data: Application[]
+    meta: {
+        total: number
+        page: number
+        limit: number
+        totalPages: number
+    }
+}> => {
+    const { status, search, page: rawPage, limit: rawLimit } = filter
+    const page = Math.max(1, Number(rawPage)) || 1
+    const limit = Math.min(100, Number(rawLimit)) || 10
     const skip = (page - 1) * limit
 
-    const where = {
+    const where: any = {
         authorId: Number(userId)
     }
     if (status) {
         where.status = status
     }
-
     if (search) {
         where.OR = [
             { companyName: { contains: search, mode: 'insensitive' } },
             { position: { contains: search, mode: 'insensitive' } }
         ]
     }
+
     const [applications, totalCount] = await Promise.all([
-        prisma.application.findMany({ where, skip, take: limit, }),
+        prisma.application.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
         prisma.application.count({ where })
     ])
+
     return {
         data: applications,
         meta: {
@@ -39,7 +56,10 @@ export const getUserApplications = async (userId, filter = {}, pagination = {}) 
     }
 }
 
-export const getApplicationById = async (applicationId, userId) => {
+export const getApplicationById = async (
+    applicationId: number,
+    userId: number
+): Promise<ServiceResult<Application>> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
@@ -55,7 +75,11 @@ export const getApplicationById = async (applicationId, userId) => {
     return { data: application }
 }
 
-export const updateApplication = async (applicationId, userId, updateData) => {
+export const updateApplication = async (
+    applicationId: number,
+    userId: number,
+    updateData: Partial<CreateApplicationInput>
+): Promise<ServiceResult<Application>> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
@@ -71,11 +95,14 @@ export const updateApplication = async (applicationId, userId, updateData) => {
         where: { id: Number(applicationId) },
         data: updateData
     })
-    return { data: updatedApp }
 
+    return { data: updatedApp }
 }
 
-export const deleteApplication = async (applicationId, userId) => {
+export const deleteApplication = async (
+    applicationId: number,
+    userId: number
+): Promise<ServiceResult<boolean>> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
@@ -95,21 +122,20 @@ export const deleteApplication = async (applicationId, userId) => {
     return { data: true }
 }
 
-
-export const getApplicationStats = async (userId) => {
+export const getApplicationStats = async (
+    userId: number
+): Promise<{
+    total: number
+    thisWeek: number
+    byStatus: Record<string, number>
+}> => {
     const authorId = Number(userId)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
     const [total, thisWeek, statusGroup] = await Promise.all([
-        prisma.application.count({
-            where: { authorId }
-        }),
-
-        prisma.application.count({
-            where: { authorId, createdAt: { gte: sevenDaysAgo } }
-        }),
-
-
+        prisma.application.count({ where: { authorId } }),
+        prisma.application.count({ where: { authorId, createdAt: { gte: sevenDaysAgo } } }),
         prisma.application.groupBy({
             by: ["status"],
             where: { authorId },
@@ -117,7 +143,7 @@ export const getApplicationStats = async (userId) => {
         })
     ])
 
-    const byStatus = statusGroup.reduce((acc, curr) => {
+    const byStatus = statusGroup.reduce((acc: any, curr: any) => {
         acc[curr.status] = curr._count._all
         return acc
     }, {})
@@ -128,4 +154,3 @@ export const getApplicationStats = async (userId) => {
         byStatus
     }
 }
-
