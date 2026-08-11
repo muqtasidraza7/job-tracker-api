@@ -14,4 +14,5 @@ export const env = {
     JWT_KEY: process.env.JWT_KEY!,
     DATABASE_URL: process.env.DATABASE_URL!,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d'
 }

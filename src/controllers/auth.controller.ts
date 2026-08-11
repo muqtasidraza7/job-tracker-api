@@ -30,7 +30,7 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, RegisterBod
     const token = jwt.sign({
         id: user.id, name, email, avatarUrl
     }, env.JWT_KEY,
-        { expiresIn: '7d' })
+        { expiresIn: env.JWT_EXPIRES_IN as any })
     return successResponse(res, 201, {
         user: { name: user.name, email: user.email, avatarUrl: avatarUrl },
         token

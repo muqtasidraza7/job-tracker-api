@@ -5,6 +5,7 @@ import {
     GetApplicationsFilter,
     ServiceResult
 } from "../types/service.types.js"
+import { Prisma } from "@prisma/client"
 
 export const createApplication = async (data: CreateApplicationInput): Promise<Application> => {
     return await prisma.application.create({ data })
@@ -27,7 +28,7 @@ export const getUserApplications = async (
     const limit = Math.min(100, Number(rawLimit)) || 10
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: Prisma.ApplicationWhereInput = {
         authorId: Number(userId)
     }
     if (status) {
@@ -143,7 +144,7 @@ export const getApplicationStats = async (
         })
     ])
 
-    const byStatus = statusGroup.reduce((acc: any, curr: any) => {
+    const byStatus = statusGroup.reduce<Record<string, number>>((acc: any, curr: any) => {
         acc[curr.status] = curr._count._all
         return acc
     }, {})

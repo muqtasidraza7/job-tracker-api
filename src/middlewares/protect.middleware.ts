@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { errorResponse, successResponse } from "../utils/response.js"
+import { errorResponse } from "../utils/response.js"
 import jwt from "jsonwebtoken"
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
