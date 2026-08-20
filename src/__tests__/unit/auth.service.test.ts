@@ -37,14 +37,15 @@ describe('auth.service', () => {
             expect(result).toEqual(mockUser)
             expect(mockFindUnique).toHaveBeenCalledWith({ where: { email: 'hawk@test.com' } })
             expect(mockFindUnique).toHaveBeenCalledTimes(1)
-        }),
-            it('return null when the email does not exist', async () => {
-                mockFindUnique.mockResolvedValue(null)
-                const result = await findUserByEmail('ghost@gmail.com')
-                expect(result).toBeNull()
-                expect(mockFindUnique).toHaveBeenCalledWith({ where: { email: 'ghost@gmail.com' } })
-                expect(mockFindUnique).toHaveBeenCalledTimes(1)
-            })
+        })
+
+        it('return null when the email does not exist', async () => {
+            mockFindUnique.mockResolvedValue(null)
+            const result = await findUserByEmail('ghost@gmail.com')
+            expect(result).toBeNull()
+            expect(mockFindUnique).toHaveBeenCalledWith({ where: { email: 'ghost@gmail.com' } })
+            expect(mockFindUnique).toHaveBeenCalledTimes(1)
+        })
     })
 
     describe('create user', () => {
