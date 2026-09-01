@@ -1,5 +1,23 @@
-import { ApplicationStatus } from '@prisma/client'
-import { StageType, StageResult } from '@prisma/client';
+import { Application, ApplicationStatus, StageType, StageResult } from '@prisma/client'
+
+export type ApplicationWithStages = Application & {
+    stages: Array<{
+        type: StageType
+        result: StageResult
+    }>
+}
+
+export type PaginatedApplications = {
+    applications: ApplicationWithStages[]
+    meta: {
+        total: number
+        page: number
+        limit: number
+        totalPages: number
+        hasNextPage: boolean
+        hasPrevPage: boolean
+    }
+}
 
 export type ServiceResult<T> =
     | { data: T; status?: never; message?: never }

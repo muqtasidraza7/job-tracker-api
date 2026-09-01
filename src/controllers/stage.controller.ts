@@ -5,7 +5,7 @@ import {
     updateStage,
     deleteStage
 } from "../services/stage.service.js"
-import { asyncHandler } from "../utils/asyncHandler"
+import { asyncHandler } from "../utils/asyncHandler.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import { CreateStageInput } from "../types/service.types.js"
 

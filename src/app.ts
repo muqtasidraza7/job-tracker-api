@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
+import './config/redis.js'
 import { errorHandler } from "./middlewares/errorHandler.middleware.js"
 import authRouter from "./routes/auth.route.js"
 import applicationRouter from "./routes/application.router.js"

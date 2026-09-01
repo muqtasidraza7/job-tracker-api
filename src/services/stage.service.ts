@@ -1,6 +1,7 @@
 import { prisma } from "../config/db.js"
 import { InterviewStage } from "@prisma/client"
 import { CreateStageInput, ServiceResult } from "../types/service.types.js"
+import { invalidateUserCache } from "../utils/cache.js"
 
 export const getStagesByApplicationId = async (applicationId: number, userId: number): Promise<ServiceResult<InterviewStage[]>> => {
     const app = await prisma.application.findUnique({
@@ -35,7 +36,7 @@ export const createStage = async (applicationId: number, userId: number, stageDa
     const shouldUpdateStatus = isFirstStage && app.status === "APPLIED"
 
 
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const stage = await tx.interviewStage.create({
             data: {
                 ...stageData,
@@ -50,8 +51,11 @@ export const createStage = async (applicationId: number, userId: number, stageDa
             })
         }
 
-        return { data: stage }
+        return stage
     })
+
+    await invalidateUserCache(userId)
+    return { data: result }
 }
 
 export const updateStage = async (stageId: number, userId: number, updateData: Partial<CreateStageInput>): Promise<ServiceResult<InterviewStage>> => {
@@ -72,6 +76,7 @@ export const updateStage = async (stageId: number, userId: number, updateData: P
         where: { id: Number(stageId) },
         data: updateData
     })
+    await invalidateUserCache(userId)
     return { data: updatedStage }
 }
 
@@ -91,5 +96,6 @@ export const deleteStage = async (stageId: number, userId: number): Promise<Serv
     await prisma.interviewStage.delete({
         where: { id: Number(stageId) }
     })
+    await invalidateUserCache(userId)
     return { data: true }
 }

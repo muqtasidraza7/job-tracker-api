@@ -1,6 +1,29 @@
 import { app } from "./app.js";
+import { prisma } from "./config/db.js";
+import { redis } from "./config/redis.js";
+import { env } from "./config/env.js";
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-    console.log(`Server is listening at http://localhost:${PORT}`);
-})
+const PORT = env.PORT || 3000;
+
+const startServer = async () => {
+    try {
+        await prisma.$connect();
+        console.log("Database connected");
+        
+        try {
+            await redis.connect();
+            console.log("Redis connected successfully");
+        } catch (redisError) {
+            console.warn("⚠️ Failed to connect to Redis. Server running without caching:", (redisError as Error).message);
+        }
+
+        app.listen(PORT, () => {
+            console.log(`Server is listening at http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
+
+startServer();

@@ -1,6 +1,6 @@
 import { prisma } from "../config/db.js"
 import { User } from "@prisma/client"
-import { CreateUserInput } from "../types/service.types"
+import { CreateUserInput } from "../types/service.types.js"
 
 export const findUserByEmail = async (email: string): Promise<User | null> => {
     return await prisma.user.findUnique({

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  # PostgreSQL database
+  db:
+    image: postgres:16-alpine
+    container_name: job-tracker-db
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: job_tracker
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U dev_user -d job_tracker' ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: job-tracker-redis
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', 'ping' ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Node.js application
+  app:
+    build: .
+    container_name: job-tracker-app
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://dev_user:dev_password@db:5432/job_tracker
+      REDIS_URL: redis://redis:6379
+      JWT_KEY: local_dev_secret_replace_in_production
+      JWT_EXPIRES_IN: 7d
+      OPENAI_API_KEY: ${OPENAI_API_KEY} # Reads this from your local .env file!
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Mount source for hot reload in development
+      - ./src:/app/src
+
+# Named volumes persist data between container restarts
+volumes:
+  postgres_data:
