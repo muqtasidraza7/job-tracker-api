@@ -3,11 +3,11 @@ import { Application, ApplicationStatus } from "@prisma/client"
 import {
     CreateApplicationInput,
     GetApplicationsFilter,
-    ServiceResult,
     PaginatedApplications
 } from "../types/service.types.js"
 import { Prisma } from "@prisma/client"
 import { getOrSet, CacheKeys, invalidateUserCache } from "../utils/cache.js"
+import { NotFoundError, ForbiddenError } from "../utils/errors.js"
 
 export const createApplication = async (data: CreateApplicationInput): Promise<Application> => {
     const application = await prisma.application.create({ data })
@@ -67,36 +67,36 @@ export const getUserApplications = async (
 export const getApplicationById = async (
     applicationId: number,
     userId: number
-): Promise<ServiceResult<Application>> => {
+): Promise<Application> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
 
     if (!application) {
-        return { status: 404, message: "Application not found" }
+        throw new NotFoundError("Application not found")
     }
 
     if (application.authorId !== Number(userId)) {
-        return { status: 403, message: "User not Authorized" }
+        throw new ForbiddenError("You are not authorized to view this application")
     }
 
-    return { data: application }
+    return application
 }
 
 export const updateApplication = async (
     applicationId: number,
     userId: number,
     updateData: Partial<CreateApplicationInput>
-): Promise<ServiceResult<Application>> => {
+): Promise<Application> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
     if (!application) {
-        return { status: 404, message: "Application not found" }
+        throw new NotFoundError("Application not found")
     }
 
     if (application.authorId !== Number(userId)) {
-        return { status: 403, message: "User not Authorized" }
+        throw new ForbiddenError("You are not authorized to modify this application")
     }
 
     const updatedApp = await prisma.application.update({
@@ -105,31 +105,29 @@ export const updateApplication = async (
     })
     await invalidateUserCache(userId)
 
-    return { data: updatedApp }
+    return updatedApp
 }
 
 export const deleteApplication = async (
     applicationId: number,
     userId: number
-): Promise<ServiceResult<boolean>> => {
+): Promise<void> => {
     const application = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
 
     if (!application) {
-        return { status: 404, message: "Application not found" }
+        throw new NotFoundError("Application not found")
     }
 
     if (application.authorId !== Number(userId)) {
-        return { status: 403, message: "User not Authorized" }
+        throw new ForbiddenError("You are not authorized to delete this application")
     }
 
     await prisma.application.delete({
         where: { id: Number(applicationId) }
     })
     await invalidateUserCache(userId)
-
-    return { data: true }
 }
 
 export const getApplicationStats = async (

@@ -10,7 +10,7 @@ import {
 } from "../services/application.service.js"
 import { generateCoverLetter } from "../services/ai.service.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { successResponse, errorResponse } from "../utils/response.js"
+import { successResponse } from "../utils/response.js"
 
 interface CreateApplicationBody {
     companyName: string
@@ -71,43 +71,31 @@ export const getAppById = asyncHandler(async (
     req: Request<ApplicationParams>,
     res: Response
 ) => {
-    const result = await getApplicationById(Number(req.params.id), req.user!.id)
-    if (result.status) {
-        return errorResponse(res, result.status, result.message)
-    }
-    return successResponse(res, 200, result.data)
+    const application = await getApplicationById(Number(req.params.id), req.user!.id)
+    return successResponse(res, 200, application)
 })
 
 export const updateApp = asyncHandler(async (
     req: Request<ApplicationParams, {}, Partial<CreateApplicationBody>>,
     res: Response
 ) => {
-    const result = await updateApplication(Number(req.params.id), req.user!.id, req.body)
-    if (result.status) {
-        return errorResponse(res, result.status, result.message)
-    }
-    return successResponse(res, 200, result.data)
+    const updated = await updateApplication(Number(req.params.id), req.user!.id, req.body)
+    return successResponse(res, 200, updated)
 })
 
 export const updateAppStatus = asyncHandler(async (
     req: Request<ApplicationParams, {}, { status: ApplicationStatus }>,
     res: Response
 ) => {
-    const result = await updateApplication(Number(req.params.id), req.user!.id, { status: req.body.status })
-    if (result.status) {
-        return errorResponse(res, result.status, result.message)
-    }
-    return successResponse(res, 200, result.data)
+    const updated = await updateApplication(Number(req.params.id), req.user!.id, { status: req.body.status })
+    return successResponse(res, 200, updated)
 })
 
 export const deleteApp = asyncHandler(async (
     req: Request<ApplicationParams>,
     res: Response
 ) => {
-    const result = await deleteApplication(Number(req.params.id), req.user!.id)
-    if (result.status) {
-        return errorResponse(res, result.status, result.message)
-    }
+    await deleteApplication(Number(req.params.id), req.user!.id)
     return res.status(204).send()
 })
 
@@ -118,12 +106,9 @@ export const generateCoverLetterHandler = asyncHandler(async (
     const applicationId = Number(req.params.id)
     const userId = req.user!.id
 
-    const result = await getApplicationById(applicationId, userId)
-    if (result.status) {
-        return errorResponse(res, result.status, result.message)
-    }
-
-    const coverLetter = await generateCoverLetter(result.data!)
+    const application = await getApplicationById(applicationId, userId)
+    const coverLetter = await generateCoverLetter(application)
 
     return successResponse(res, 200, { coverLetter })
 })
+

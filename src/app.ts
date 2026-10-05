@@ -9,7 +9,7 @@ import authRouter from "./routes/auth.route.js"
 import applicationRouter from "./routes/application.router.js"
 import stageRouter from "./routes/stage.routes.js"
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js"
-
+import { errorResponse } from "./utils/response.js"
 
 export const app = express()
 dotenv.config()
@@ -25,5 +25,8 @@ app.use("/api/applications/:id/stages", stageRouter)
 
 
 
+app.use((req, res) => {
+    return errorResponse(res, 404, `Route ${req.method} ${req.originalUrl} not found`)
+})
 
 app.use(errorHandler)

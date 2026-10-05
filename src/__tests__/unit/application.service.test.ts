@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals"
+import { NotFoundError, ForbiddenError } from "../../utils/errors.js"
 
 await jest.unstable_mockModule('../../config/db.js', () => ({
     prisma: {
@@ -29,24 +30,19 @@ describe('application.service', () => {
             }
             mockFindUnique.mockResolvedValue(mockApplication as any)
             const result = await getApplicationById(1, 42)
-            expect(result.data).toEqual(mockApplication)
-            expect(result.status).toBeUndefined()
+            expect(result).toEqual(mockApplication)
             expect(mockFindUnique).toHaveBeenCalledWith({ where: { id: 1 } })
         })
 
-        it('returns 404 when the application does not exist', async () => {
+        it('throws NotFoundError when the application does not exist', async () => {
             mockFindUnique.mockResolvedValue(null)
-            const result = await getApplicationById(999, 42)
-            expect(result.status).toBe(404)
-            expect(result.data).toBeUndefined()
+            await expect(getApplicationById(999, 42)).rejects.toThrow(NotFoundError)
         })
 
-        it('returns 403 when the application belongs to a different user', async () => {
+        it('throws ForbiddenError when the application belongs to a different user', async () => {
             const mockApp = { id: 1, authorId: 99 }
             mockFindUnique.mockResolvedValue(mockApp as any)
-            const result = await getApplicationById(1, 42)
-            expect(result.status).toBe(403)
-            expect(result.data).toBeUndefined()
+            await expect(getApplicationById(1, 42)).rejects.toThrow(ForbiddenError)
         })
     })
 
@@ -62,21 +58,20 @@ describe('application.service', () => {
             mockFindUnique.mockResolvedValue(existing as any)
             mockUpdate.mockResolvedValue(updated as any)
             const result = await updateApplication(1, 42, { companyName: 'Devsinc' })
-            expect(result.data).toEqual(updated)
-            expect(result.status).toBeUndefined()
+            expect(result).toEqual(updated)
             expect(mockUpdate).toHaveBeenCalledWith({
                 where: { id: 1 },
                 data: { companyName: 'Devsinc' }
             })
         })
-        it('returns 403 when a different user tries to update', async () => {
+        it('throws ForbiddenError when a different user tries to update', async () => {
             const existing = { id: 1, authorId: 99 }
             mockFindUnique.mockResolvedValue(existing as any)
-            const result = await updateApplication(1, 42, { companyName: 'Other' })
-            expect(result.status).toBe(403)
+            await expect(updateApplication(1, 42, { companyName: 'Other' })).rejects.toThrow(ForbiddenError)
             expect(mockUpdate).not.toHaveBeenCalled()
         })
     })
 })
+
 
 

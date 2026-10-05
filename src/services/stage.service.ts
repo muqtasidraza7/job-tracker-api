@@ -1,40 +1,42 @@
 import { prisma } from "../config/db.js"
 import { InterviewStage } from "@prisma/client"
-import { CreateStageInput, ServiceResult } from "../types/service.types.js"
+import { CreateStageInput } from "../types/service.types.js"
 import { invalidateUserCache } from "../utils/cache.js"
+import { NotFoundError, ForbiddenError } from "../utils/errors.js"
 
-export const getStagesByApplicationId = async (applicationId: number, userId: number): Promise<ServiceResult<InterviewStage[]>> => {
+export const getStagesByApplicationId = async (applicationId: number, userId: number): Promise<InterviewStage[]> => {
     const app = await prisma.application.findUnique({
         where: { id: Number(applicationId) }
     })
-    if (!app || app.authorId !== Number(userId)) {
-        return { status: 403, message: "Unauthorized or Application not found" }
+    if (!app) {
+        throw new NotFoundError("Application not found")
+    }
+    if (app.authorId !== Number(userId)) {
+        throw new ForbiddenError("You are not authorized to view stages for this application")
     }
 
     const stages = await prisma.interviewStage.findMany({
         where: { applicationId: Number(applicationId) },
         orderBy: { scheduledAt: 'asc' }
     })
-    return { data: stages }
+    return stages
 }
 
-export const createStage = async (applicationId: number, userId: number, stageData: CreateStageInput): Promise<ServiceResult<InterviewStage>> => {
+export const createStage = async (applicationId: number, userId: number, stageData: CreateStageInput): Promise<InterviewStage> => {
     const app = await prisma.application.findUnique({
         where: { id: Number(applicationId) },
         include: { stages: true }
     })
 
     if (!app) {
-        return { status: 404, message: "Application not found" }
+        throw new NotFoundError("Application not found")
     }
     if (app.authorId !== Number(userId)) {
-        return { status: 403, message: "Unauthorized" }
+        throw new ForbiddenError("You are not authorized to add stages to this application")
     }
-
 
     const isFirstStage = app.stages.length === 0
     const shouldUpdateStatus = isFirstStage && app.status === "APPLIED"
-
 
     const result = await prisma.$transaction(async (tx) => {
         const stage = await tx.interviewStage.create({
@@ -55,21 +57,20 @@ export const createStage = async (applicationId: number, userId: number, stageDa
     })
 
     await invalidateUserCache(userId)
-    return { data: result }
+    return result
 }
 
-export const updateStage = async (stageId: number, userId: number, updateData: Partial<CreateStageInput>): Promise<ServiceResult<InterviewStage>> => {
-
+export const updateStage = async (stageId: number, userId: number, updateData: Partial<CreateStageInput>): Promise<InterviewStage> => {
     const stage = await prisma.interviewStage.findUnique({
         where: { id: Number(stageId) },
         include: { application: true }
     })
 
     if (!stage) {
-        return { status: 404, message: "Stage not found" }
+        throw new NotFoundError("Stage not found")
     }
     if (stage.application.authorId !== Number(userId)) {
-        return { status: 403, message: "Unauthorized" }
+        throw new ForbiddenError("You are not authorized to modify this stage")
     }
 
     const updatedStage = await prisma.interviewStage.update({
@@ -77,25 +78,25 @@ export const updateStage = async (stageId: number, userId: number, updateData: P
         data: updateData
     })
     await invalidateUserCache(userId)
-    return { data: updatedStage }
+    return updatedStage
 }
 
-export const deleteStage = async (stageId: number, userId: number): Promise<ServiceResult<boolean>> => {
+export const deleteStage = async (stageId: number, userId: number): Promise<void> => {
     const stage = await prisma.interviewStage.findUnique({
         where: { id: Number(stageId) },
         include: { application: true }
     })
 
     if (!stage) {
-        return { status: 404, message: "Stage not found" }
+        throw new NotFoundError("Stage not found")
     }
     if (stage.application.authorId !== Number(userId)) {
-        return { status: 403, message: "Unauthorized" }
+        throw new ForbiddenError("You are not authorized to delete this stage")
     }
 
     await prisma.interviewStage.delete({
         where: { id: Number(stageId) }
     })
     await invalidateUserCache(userId)
-    return { data: true }
 }
+
