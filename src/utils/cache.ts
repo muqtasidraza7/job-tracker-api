@@ -32,9 +32,13 @@ export const invalidate = async (key: string): Promise<void> => {
 
 export const invalidatePattern = async (pattern: string): Promise<void> => {
     try {
-        const keys = await redis.keys(pattern)
-        if (keys.length > 0) {
-            await redis.del(...keys)
+        const stream = redis.scanStream({ match: pattern, count: 100 })
+        const keysToDelete: string[] = []
+        for await (const resultKeys of stream) {
+            keysToDelete.push(...resultKeys)
+        }
+        if (keysToDelete.length > 0) {
+            await redis.del(...keysToDelete)
         }
     } catch (error) {
         console.warn(`Redis pattern invalidate error: ${(error as Error).message}`)

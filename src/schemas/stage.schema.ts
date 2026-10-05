@@ -31,3 +31,9 @@ export const updateStageSchema = z.object({
     notes: z.string().optional(),
     result: stageResultEnum.optional()
 })
+
+export const stageParamSchema = z.object({
+    id: z.coerce.number().int().positive("Application ID must be a positive integer"),
+    stageId: z.coerce.number().int().positive("Stage ID must be a positive integer").optional()
+});
+

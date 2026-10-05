@@ -10,6 +10,7 @@ import applicationRouter from "./routes/application.router.js"
 import stageRouter from "./routes/stage.routes.js"
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js"
 
+
 export const app = express()
 dotenv.config()
 app.use(cors())

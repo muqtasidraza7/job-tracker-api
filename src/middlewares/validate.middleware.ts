@@ -1,19 +1,53 @@
 import { NextFunction, Request, Response } from "express";
 import { errorResponse } from "../utils/response.js";
-import { ZodObject } from "zod";
-export const validate = (schema: ZodObject<any>) => {
+import { ZodType } from "zod";
+
+interface ValidationSource {
+    body?: ZodType<any>;
+    params?: ZodType<any>;
+    query?: ZodType<any>;
+}
+
+export const validate = (schema: ZodType<any> | ValidationSource) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        const result = schema.safeParse(req.body)
-        if (!result.success) {
-            const errors = result.error.issues.map(err => ({
-                field: err.path.join('.'),
-                message: err.message
-            }));
-            return errorResponse(res, 400, "Validation failed", errors);
+        const sources: ValidationSource = 'safeParse' in schema ? { body: schema } : schema;
+
+        if (sources.params) {
+            const result = sources.params.safeParse(req.params);
+            if (!result.success) {
+                const errors = result.error.issues.map(err => ({
+                    field: `params.${err.path.join('.')}`,
+                    message: err.message
+                }));
+                return errorResponse(res, 400, "Invalid route parameters", errors);
+            }
+            req.params = result.data;
         }
 
-        req.body = result.data
+        if (sources.query) {
+            const result = sources.query.safeParse(req.query);
+            if (!result.success) {
+                const errors = result.error.issues.map(err => ({
+                    field: `query.${err.path.join('.')}`,
+                    message: err.message
+                }));
+                return errorResponse(res, 400, "Invalid query parameters", errors);
+            }
+            req.query = result.data;
+        }
 
-        next()
-    }
-}
+        if (sources.body) {
+            const result = sources.body.safeParse(req.body);
+            if (!result.success) {
+                const errors = result.error.issues.map(err => ({
+                    field: `body.${err.path.join('.')}`,
+                    message: err.message
+                }));
+                return errorResponse(res, 400, "Validation failed", errors);
+            }
+            req.body = result.data;
+        }
+
+        next();
+    };
+};

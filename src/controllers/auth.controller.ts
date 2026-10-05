@@ -52,7 +52,7 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, LoginBody>, re
     const token = jwt.sign({
         id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl
     }, env.JWT_KEY,
-        { expiresIn: "7d" })
+        { expiresIn: env.JWT_EXPIRES_IN as any })
 
     return successResponse(res, 200, {
         user: { name: user.name, email: user.email, avatarUrl: user.avatarUrl },

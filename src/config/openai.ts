@@ -1,8 +1,6 @@
 import OpenAI from "openai"
-import dotenv from "dotenv"
-
-dotenv.config()
+import { env } from "./env"
 
 export const openai: OpenAI = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: env.OPENAI_API_KEY
 })

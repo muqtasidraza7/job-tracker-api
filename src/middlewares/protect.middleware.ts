@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { errorResponse } from "../utils/response.js"
 import jwt from "jsonwebtoken"
+import { env } from "../config/env.js"
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization
@@ -10,7 +11,7 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
 
     const token = header.split(" ")[1]
     try {
-        const decoded = jwt.verify(token, process.env.JWT_KEY as string) as {
+        const decoded = jwt.verify(token, env.JWT_KEY as string) as {
             id: number
             email: string
             name: string

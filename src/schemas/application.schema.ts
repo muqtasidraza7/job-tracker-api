@@ -53,3 +53,14 @@ export const updateApplicationSchema = z.object({
 export const updateStatusSchema = z.object({
     status: applicationStatusEnum
 })
+
+export const applicationIdParamSchema = z.object({
+    id: z.coerce.number().int().positive("Application ID must be a positive integer")
+});
+
+export const getApplicationsQuerySchema = z.object({
+    status: applicationStatusEnum.optional(),
+    search: z.string().optional(),
+    page: z.coerce.number().int().positive().optional().default(1),
+    limit: z.coerce.number().int().positive().max(50).optional().default(10)
+});
