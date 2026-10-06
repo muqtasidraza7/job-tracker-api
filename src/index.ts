@@ -9,12 +9,14 @@ const startServer = async () => {
     try {
         await prisma.$connect();
         console.log("Database connected");
-        
+
         try {
-            await redis.connect();
-            console.log("Redis connected successfully");
+            if (redis.status === "wait") {
+                await redis.connect();
+            }
+            await redis.ping();
         } catch (redisError) {
-            console.warn("⚠️ Failed to connect to Redis. Server running without caching:", (redisError as Error).message);
+            console.warn("Failed to connect to Redis. Server running without caching:", (redisError as Error).message);
         }
 
         app.listen(PORT, () => {

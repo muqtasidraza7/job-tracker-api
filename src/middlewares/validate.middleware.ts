@@ -21,7 +21,7 @@ export const validate = (schema: ZodType<any> | ValidationSource) => {
                 }));
                 return errorResponse(res, 400, "Invalid route parameters", errors);
             }
-            req.params = result.data;
+            Object.defineProperty(req, 'params', { value: result.data, writable: true, configurable: true });
         }
 
         if (sources.query) {
@@ -33,7 +33,7 @@ export const validate = (schema: ZodType<any> | ValidationSource) => {
                 }));
                 return errorResponse(res, 400, "Invalid query parameters", errors);
             }
-            req.query = result.data;
+            Object.defineProperty(req, 'query', { value: result.data, writable: true, configurable: true });
         }
 
         if (sources.body) {

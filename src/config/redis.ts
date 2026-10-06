@@ -3,8 +3,7 @@ import { env } from "./env.js"
 
 
 const redisOptions: RedisOptions = {
-  lazyConnect: true,
-  enableOfflineQueue: false,
+  enableOfflineQueue: true,
   maxRetriesPerRequest: 1,
   retryStrategy(times) {
     if (times > 3) {

@@ -55,7 +55,7 @@ export const getApps = asyncHandler(async (
 ) => {
     const { status, search, page, limit } = req.query
     const result = await getUserApplications(req.user!.id, { status, search, page, limit })
-    return successResponse(res, 200, { applications: result.applications, meta: result.meta })
+    return successResponse(res, 200, result.applications, result.meta)
 })
 
 export const getAppStats = asyncHandler(async (

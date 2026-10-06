@@ -1,9 +1,12 @@
-# Job Application Tracker API
+# Job Application Tracker & AI Career Copilot API
 
-A RESTful backend API for tracking job applications, interview stages, and generating AI-powered cover letters.
+A production-ready, RESTful backend API for tracking job applications, managing multi-round interview stages, generating AI-powered cover letters, and visualizing application analytics.
 
-**Live URL:** [https://job-tracker-api-puce.vercel.app](https://job-tracker-api-puce.vercel.app)  
-**GitHub:** [https://github.com/muqtasidraza7/job-tracker-api](https://github.com/muqtasidraza7/job-tracker-api)
+- **Live API URL:** [https://job-tracker-api-puce.vercel.app](https://job-tracker-api-puce.vercel.app)
+- **Interactive Swagger Docs UI:** [https://job-tracker-api-puce.vercel.app/api/docs](https://job-tracker-api-puce.vercel.app/api/docs) *(or http://localhost:3000/api/docs locally)*
+- **OpenAPI 3.0 Spec (JSON):** `/api/docs.json`
+- **Health Check:** `/api/health`
+- **GitHub Repository:** [https://github.com/muqtasidraza7/job-tracker-api](https://github.com/muqtasidraza7/job-tracker-api)
 
 ---
 

@@ -77,8 +77,8 @@ describe('Application ownership enforcement', () => {
             .set('Authorization', `Bearer ${tokenB}`)
 
         expect(res.status).toBe(200)
-        expect(res.body.data.applications).toHaveLength(0)
-        expect(res.body.data.meta.total).toBe(0)
+        expect(res.body.data).toHaveLength(0)
+        expect(res.body.meta.total).toBe(0)
     })
 })
 
